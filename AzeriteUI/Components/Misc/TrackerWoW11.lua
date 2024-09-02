@@ -140,7 +140,7 @@ end
 
 Tracker.OnEnable = function(self)
 
-	LoadAddOn("Blizzard_ObjectiveTracker")
+	C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
 
 	self:PrepareFrames()
 	self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnEvent")
