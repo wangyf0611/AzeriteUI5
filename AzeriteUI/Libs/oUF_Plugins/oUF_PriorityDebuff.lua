@@ -39,6 +39,10 @@ local GetSpecialization = GetSpecialization
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpellInfo = GetSpellInfo
 local IsUsableSpell = IsUsableSpell
+if (oUF.isRetail) then
+	GetSpellInfo = C_Spell.GetSpellName
+	IsUsableSpell = C_Spell.IsSpellUsable
+end
 local UnitAura = UnitAura
 local UnitCanAttack = UnitCanAttack
 local UnitIsCharmed = UnitIsCharmed
