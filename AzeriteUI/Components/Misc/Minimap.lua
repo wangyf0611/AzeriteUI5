@@ -342,6 +342,8 @@ local Minimap_OnMouseUp = function(self, button)
 	if (button == "RightButton") then
 		if (ns.IsClassic) then
 			MinimapMod:ShowMinimapTrackingMenu()
+		elseif (ns.WoW11) then
+			MenuUtil.CreateContextMenu(self, MinimapCluster.Tracking.Button.menuGenerator)
 		else
 			ToggleDropDownMenu(1, nil, _G[ns.Prefix.."MiniMapTrackingDropDown"], "cursor")
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "SFX")
@@ -512,6 +514,9 @@ end
 -- Addon Styling & Initialization
 --------------------------------------------
 MinimapMod.InitializeMBB = function(self)
+	if (self.addonCompartment) then
+		self.addonCompartment:SetParent(ns.Hider)
+	end
 
 	local button = CreateFrame("Frame", nil, Minimap)
 	button:SetFrameLevel(button:GetFrameLevel() + 10)
@@ -828,10 +833,60 @@ MinimapMod.CreateCustomElements = function(self)
 
 	self.mail = mail
 
-	local dropdown = LibDD:Create_UIDropDownMenu(ns.Prefix.."MiniMapTrackingDropDown", UIParent)
-	dropdown:SetID(1)
-	dropdown:SetClampedToScreen(true)
-	dropdown:Hide()
+	-- Addon Compartment
+	if (ns.IsRetail) then
+		local addonCompartment = self.Objects.Addons
+		if (addonCompartment) then
+			local addons = CreateFrame("DropdownButton", nil, Minimap)
+			addons:SetPoint("BOTTOMRIGHT", -252, 43)
+			addons:SetSize(16, 16)
+
+			addons:SetupMenu(addonCompartment.menuGenerator)
+
+			local addonsAnchor = AnchorUtil.CreateAnchor("BOTTOMRIGHT", addons, "TOPLEFT", 0, 0)
+			addons:SetMenuAnchor(addonsAnchor)
+
+			addons:SetScript("OnEnter", function(self)
+				addonCompartment:SetAlpha(.95)
+
+				if (GameTooltip:IsForbidden()) then return end
+
+				GameTooltip_SetDefaultAnchor(GameTooltip, self)
+				GameTooltip_SetTitle(GameTooltip, ADDONS)
+				GameTooltip:Show()
+			end)
+
+			addons:SetScript("OnLeave", function(self)
+				addonCompartment:SetAlpha(.5)
+
+				if (GameTooltip:IsForbidden()) then return end
+
+				GameTooltip:Hide()
+			end)
+
+			local addonsText = addons:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			addonsText:SetText(addonCompartment:GetText())
+			addonsText:SetPoint("CENTER")
+			addons:SetFontString(addonsText)
+			addons.text = addonsText
+
+			addonCompartment:SetAlpha(.5)
+
+			self.addonCompartment = addons
+		end
+	end
+
+	local dropdown = nil
+
+	if (not ns.WoW11) then
+		dropdown = LibDD:Create_UIDropDownMenu(ns.Prefix.."MiniMapTrackingDropDown", UIParent)
+		dropdown:SetID(1)
+		dropdown:SetClampedToScreen(true)
+		dropdown:Hide()
+
+		dropdown.noResize = true
+		self.dropdown = dropdown
+	end
 
 	if (ns.IsClassic) then
 		self.ShowMinimapTrackingMenu = function(self)
@@ -877,13 +932,10 @@ MinimapMod.CreateCustomElements = function(self)
 				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON, "SFX")
 			end
 		end
-	else
+	elseif (not ns.WoW11) then
 		LibDD:UIDropDownMenu_Initialize(dropdown, MiniMapTrackingDropDown_Initialize, "MENU")
 	end
 
-	dropdown.noResize = true
-
-	self.dropdown = dropdown
 
 	self:UpdateCustomElements()
 	self.CreateCustomElements = noop
